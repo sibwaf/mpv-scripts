@@ -10,8 +10,7 @@ Notice: this script relies on setting saturation to the lowest possible value, e
 
 `b` doesn't look too good? Add `KEYBIND script-binding blackout/blackout` to your `input.conf`, `KEYBIND` being any keybind MPV supports.
 
-Another boss-key script exists, but at this time it is Windows-only and works too slow. On the other hand, it actually minimizes the window.
-https://gist.github.com/detuur/7ea3609b8826d0e6f6bbc730d54a963c
+Another [boss-key script](https://github.com/detuur/mpv-scripts) exists, which actually minimizes the window. Unlike it, blackout doesn't do anything outside of MPV API and makes returning back to video easier (doesn't require switching between windows).
 
 ## fuzzydir.lua
 Getting bored of moving external audio/subtitles back and forth for MPV to see them? Then surely you are using `sub-file-paths` and `audio-file-paths`. But there is a (big) problem with those wonderful properties: what are you supposed to do when everyone names those directories as they wish? Well, welcome to the horrible mess where you need to add those endless variants (and boy it gets bad when those directories are nested) to those poor properties by your own hands. Doesn't sound too fun or necessary, huh?
