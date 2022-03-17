@@ -1,11 +1,24 @@
 --[[
-Theoratically, can be any of:
-"brightness", "contrast", "saturation", "gamma", "hue"
+	blackout / by sibwaf / https://github.com/sibwaf/mpv-scripts
 
-In practice, "contrast" seems to work best.
+	Turns the screen completely black and pauses on a button press ([b] by default)
+	so you can hide whatever you are watching from other people fast enough.
+	Unpause or press the same button to go back.
 
-Setting it to "saturation" or "hue" is pretty much pointless
-as you will get gray-scale or a colored negative video instead of black screen.
+	May not work if your VO driver doesn't support changing contrast.
+
+	MIT license - do whatever you want, but I'm not responsible for any possible problems.
+	Please keep the URL to the original repository. Thanks!
+]]
+
+--[[
+	Configuration:
+
+	# property
+	
+	Theoratically, can be any of: "brightness", "contrast", "saturation", "gamma", "hue".
+	In practice, "contrast" seems to work best. Setting it to "saturation" or "hue"
+	is pretty much pointless as you will get gray-scale or a colored negative video.
 ]]
 local property = "contrast"
 
