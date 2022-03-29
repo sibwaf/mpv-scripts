@@ -32,11 +32,25 @@ local utils = require 'mp.utils'
 
 o = {
     max_search_depth = 3,
+    excluded_dir = [[
+        ["?:"]
+        ]], --excluded directories for exclude cloud mount disks on Windows, example: ["X:", "Z:"]. ! the option only for Windows
 }
 options.read_options(o)
 
+o.excluded_dir = utils.parse_json(o.excluded_dir)
+
 local default_audio_paths = mp.get_property_native("options/audio-file-paths")
 local default_sub_paths = mp.get_property_native("options/sub-file-paths")
+
+function starts_protocol(tab, val)
+	for index, value in ipairs(tab) do
+		if (val:find(value) == 1) then
+			return true
+		end
+	end
+	return false
+end
 
 function starts_with(str, prefix)
     return string.sub(str, 1, string.len(prefix)) == prefix
@@ -103,11 +117,13 @@ function explode(from, working_directory)
         path = utils.join_path(working_directory, normalize(path))
         local parent, leftover = utils.split_path(path)
 
-        if leftover == "**" then
-            table.insert(result, parent)
-            add_all(result, traverse(parent))
-        else
-            table.insert(result, path)
+        if not starts_protocol(o.excluded_dir, path) then
+            if leftover == "**" then
+                table.insert(result, parent)
+                add_all(result, traverse(parent))
+            else
+                table.insert(result, path)
+            end
         end
     end
 
