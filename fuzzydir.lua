@@ -25,9 +25,15 @@
 
     Please be careful when setting this value too high as it can result in awful performance or even stack overflow
 ]]
-local max_search_depth = 3
 
-local utils = require "mp.utils"
+local msg = require 'mp.msg'
+local options = require 'mp.options'
+local utils = require 'mp.utils'
+
+o = {
+    max_search_depth = 3,
+}
+options.read_options(o)
 
 local default_audio_paths = mp.get_property_native("options/audio-file-paths")
 local default_sub_paths = mp.get_property_native("options/sub-file-paths")
@@ -72,7 +78,7 @@ end
 
 function traverse(path, level)
     level = level or 1
-    if level > max_search_depth then
+    if level > o.max_search_depth then
         return {}
     end
 
