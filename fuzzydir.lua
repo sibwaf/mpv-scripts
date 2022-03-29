@@ -20,8 +20,8 @@
     Determines the max depth of recursive search, should be >= 1
 
     Examples for "sub-file-paths = **":
-    "max_search_depth = 1" => finds [xyz.ass, subs/xyz.ass]
-    "max_search_depth = 2" => finds [xyz.ass, subs/xyz.ass, subs/moresubs/xyz.ass]
+    "max_search_depth = 1" => finds [subs/xyz.ass]
+    "max_search_depth = 2" => finds [subs/xyz.ass, subs/moresubs/xyz.ass]
 
     Please be careful when setting this value too high as it can result in awful performance or even stack overflow
 ]]
@@ -33,8 +33,8 @@ local utils = require 'mp.utils'
 o = {
     max_search_depth = 3,
     excluded_dir = [[
-        ["?:"]
-        ]], --excluded directories for exclude cloud mount disks on Windows, example: ["X:", "Z:"]. ! the option only for Windows
+        []
+        ]], --excluded directories for cloud mount disks on Windows, example: ["X:", "Z:"]. !!the option only for Windows
 }
 options.read_options(o)
 
