@@ -20,8 +20,8 @@
     Determines the max depth of recursive search, should be >= 1
 
     Examples for "sub-file-paths = **":
-    "max_search_depth = 1" => finds [xyz.ass, subs/xyz.ass]
-    "max_search_depth = 2" => finds [xyz.ass, subs/xyz.ass, subs/moresubs/xyz.ass]
+    "max_search_depth = 1" => mpv will be able to find [xyz.ass, subs/xyz.ass]
+    "max_search_depth = 2" => mpv will be able to find [xyz.ass, subs/xyz.ass, subs/moresubs/xyz.ass]
 
     Please be careful when setting this value too high as it can result in awful performance or even stack overflow
 ]]
@@ -108,7 +108,7 @@ function explode(from, working_directory)
     local normalized = {}
     for index, path in pairs(result) do
         local normalized_path = normalize(path)
-        if not contains(normalized, normalized_path) then
+        if not contains(normalized, normalized_path) and normalized_path ~= normalize(working_directory) then
             table.insert(normalized, normalized_path)
         end
     end
