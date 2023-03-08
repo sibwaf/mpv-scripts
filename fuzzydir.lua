@@ -24,8 +24,25 @@
     "max_search_depth = 2" => mpv will be able to find [xyz.ass, subs/xyz.ass, subs/moresubs/xyz.ass]
 
     Please be careful when setting this value too high as it can result in awful performance or even stack overflow
+
+    
+    # discovery_threshold
+
+    fuzzydir will skip paths which contain more than discovery_threshold directories in them
+
+    This is done to keep at least some garbage from getting into *-file-paths properties in case of big collections:
+    - dir1 <- will be ignored on opening video.mp4 as it's probably unrelated to the file
+    - ...
+    - dir999 <- will be ignored
+    - video.mp4
+
+    Use 0 to disable this behavior completely
 ]]
+
 local max_search_depth = 3
+local discovery_threshold = 10
+
+----------
 
 local utils = require "mp.utils"
 
@@ -79,16 +96,19 @@ function traverse(path, level, cache)
         return cache[path]
     end
 
+    local result = {}
+
     local found = utils.readdir(path, "dirs")
     if found == nil then
-        return {}
-    end
-
-    local result = {}
-    for index, file in pairs(found) do
-        local full_path = utils.join_path(path, file)
-        table.insert(result, full_path)
-        add_all(result, traverse(full_path, level + 1, cache))
+        -- noop
+    elseif discovery_threshold > 0 and #found > discovery_threshold then
+        -- noop
+    else
+        for index, file in pairs(found) do
+            local full_path = utils.join_path(path, file)
+            table.insert(result, full_path)
+            add_all(result, traverse(full_path, level + 1, cache))
+        end
     end
 
     cache[path] = result
