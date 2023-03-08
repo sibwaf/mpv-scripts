@@ -87,53 +87,54 @@ function normalize(path)
     return path
 end
 
-function traverse(path, level, cache)
+function traverse(search_path, current_path, level, cache)
     if level > max_search_depth then
         return {}
     end
 
-    if cache[path] ~= nil then
-        return cache[path]
+    local full_path = utils.join_path(search_path, current_path)
+
+    if cache[full_path] ~= nil then
+        return cache[full_path]
     end
 
     local result = {}
 
-    local found = utils.readdir(path, "dirs")
-    if found == nil then
+    local discovered_paths = utils.readdir(full_path, "dirs")
+    if discovered_paths == nil then
         -- noop
-    elseif discovery_threshold > 0 and #found > discovery_threshold then
+    elseif discovery_threshold > 0 and #discovered_paths > discovery_threshold then
         -- noop
     else
-        for index, file in pairs(found) do
-            local full_path = utils.join_path(path, file)
-            table.insert(result, full_path)
-            add_all(result, traverse(full_path, level + 1, cache))
+        for _, discovered_path in pairs(discovered_paths) do
+            local new_path = utils.join_path(current_path, discovered_path)
+
+            table.insert(result, new_path)
+            add_all(result, traverse(search_path, new_path, level + 1, cache))
         end
     end
 
-    cache[path] = result
-    
+    cache[full_path] = result
+
     return result
 end
 
-function explode(from, working_directory, cache)
+function explode(raw_paths, search_path, cache)
     local result = {}
-    for index, path in pairs(from) do
-        path = utils.join_path(working_directory, normalize(path))
-        local parent, leftover = utils.split_path(path)
-
+    for _, raw_path in pairs(raw_paths) do
+        local parent, leftover = utils.split_path(raw_path)
         if leftover == "**" then
             table.insert(result, parent)
-            add_all(result, traverse(parent, 1, cache))
+            add_all(result, traverse(search_path, parent, 1, cache))
         else
-            table.insert(result, path)
+            table.insert(result, raw_path)
         end
     end
 
     local normalized = {}
     for index, path in pairs(result) do
         local normalized_path = normalize(path)
-        if not contains(normalized, normalized_path) and normalized_path ~= normalize(working_directory) then
+        if not contains(normalized, normalized_path) and normalized_path ~= "" then
             table.insert(normalized, normalized_path)
         end
     end
@@ -143,13 +144,13 @@ end
 
 function explode_all()
     local video_path = mp.get_property("path")
-    local working_directory, filename = utils.split_path(video_path)
+    local search_path, _ = utils.split_path(video_path)
     local cache = {}
 
-    local audio_paths = explode(default_audio_paths, working_directory, cache)
+    local audio_paths = explode(default_audio_paths, search_path, cache)
     mp.set_property_native("options/audio-file-paths", audio_paths)
 
-    local sub_paths = explode(default_sub_paths, working_directory, cache)
+    local sub_paths = explode(default_sub_paths, search_path, cache)
     mp.set_property_native("options/sub-file-paths", sub_paths)
 end
 
