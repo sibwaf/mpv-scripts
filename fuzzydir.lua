@@ -70,10 +70,13 @@ function normalize(path)
     return path
 end
 
-function traverse(path, level)
-    level = level or 1
+function traverse(path, level, cache)
     if level > max_search_depth then
         return {}
+    end
+
+    if cache[path] ~= nil then
+        return cache[path]
     end
 
     local found = utils.readdir(path, "dirs")
@@ -85,13 +88,15 @@ function traverse(path, level)
     for index, file in pairs(found) do
         local full_path = utils.join_path(path, file)
         table.insert(result, full_path)
-        add_all(result, traverse(full_path, level + 1))
+        add_all(result, traverse(full_path, level + 1, cache))
     end
 
+    cache[path] = result
+    
     return result
 end
 
-function explode(from, working_directory)
+function explode(from, working_directory, cache)
     local result = {}
     for index, path in pairs(from) do
         path = utils.join_path(working_directory, normalize(path))
@@ -99,7 +104,7 @@ function explode(from, working_directory)
 
         if leftover == "**" then
             table.insert(result, parent)
-            add_all(result, traverse(parent))
+            add_all(result, traverse(parent, 1, cache))
         else
             table.insert(result, path)
         end
@@ -119,11 +124,12 @@ end
 function explode_all()
     local video_path = mp.get_property("path")
     local working_directory, filename = utils.split_path(video_path)
+    local cache = {}
 
-    local audio_paths = explode(default_audio_paths, working_directory)
+    local audio_paths = explode(default_audio_paths, working_directory, cache)
     mp.set_property_native("options/audio-file-paths", audio_paths)
 
-    local sub_paths = explode(default_sub_paths, working_directory)
+    local sub_paths = explode(default_sub_paths, working_directory, cache)
     mp.set_property_native("options/sub-file-paths", sub_paths)
 end
 
