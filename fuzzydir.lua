@@ -87,6 +87,55 @@ function normalize(path)
     return path
 end
 
+function call_command(command)
+    local process = mp.command_native({
+        name = "subprocess",
+        playback_only = false,
+        capture_stdout = true,
+        args = command,
+    })
+
+    if process.status ~= 0 then
+        return nil
+    end
+
+    local result = {}
+    for line in string.gmatch(process.stdout, "([^\r\n]+)") do
+        table.insert(result, line)
+    end
+    return result
+end
+
+-- Platform-dependent optimization
+
+local powershell_version = call_command({
+    "powershell.exe",
+    "-NoProfile",
+    "-Command",
+    "$Host.Version.Major",
+})
+if powershell_version ~= nil then
+    powershell_version = tonumber(powershell_version[1])
+end
+if powershell_version == nil then
+    powershell_version = -1
+end
+
+function fast_readdir(path)
+    if powershell_version >= 3 then
+        return call_command({
+            "powershell.exe",
+            "-NoProfile",
+            "-Command",
+            "& { Get-ChildItem -LiteralPath FileSystem::\"" .. path .. "\" -Directory | foreach { $_.Name } }",
+        })
+    end
+
+    return utils.readdir(path, "dirs")
+end
+
+-- Platform-dependent optimization end
+
 function traverse(search_path, current_path, level, cache)
     if level > max_search_depth then
         return {}
@@ -100,7 +149,7 @@ function traverse(search_path, current_path, level, cache)
 
     local result = {}
 
-    local discovered_paths = utils.readdir(full_path, "dirs")
+    local discovered_paths = fast_readdir(full_path)
     if discovered_paths == nil then
         -- noop
     elseif discovery_threshold > 0 and #discovered_paths > discovery_threshold then
