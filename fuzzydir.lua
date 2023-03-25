@@ -109,7 +109,7 @@ end
 -- Platform-dependent optimization
 
 local powershell_version = call_command({
-    "powershell.exe",
+    "powershell",
     "-NoProfile",
     "-Command",
     "$Host.Version.Major",
@@ -124,10 +124,16 @@ end
 function fast_readdir(path)
     if powershell_version >= 3 then
         return call_command({
-            "powershell.exe",
+            "powershell",
             "-NoProfile",
             "-Command",
-            "& { Get-ChildItem -LiteralPath FileSystem::\"" .. path .. "\" -Directory | foreach { $_.Name } }",
+            [[
+            $dirs = Get-ChildItem -LiteralPath ]] .. string.format("%q", path) .. [[ -Directory
+            foreach($dir in $dirs) {
+                $u8clip = [System.Text.Encoding]::UTF8.GetBytes($dir.Name)
+                [Console]::OpenStandardOutput().Write($u8clip, 0, $u8clip.Length)
+                Write-Host ""
+            } ]],
         })
     end
 
