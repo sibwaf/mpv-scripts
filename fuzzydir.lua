@@ -37,15 +37,31 @@
     - video.mp4
 
     Use 0 to disable this behavior completely
+
+    # excluded_dir
+
+    fuzzydir will ignore paths which in excluded_dir
+
+    This supports absolute and relative paths
+    example on Windows: ["Z:", "Z:\\Cloud\\", "\\Cloud\\"]
 ]]
 
-local max_search_depth = 3
-local discovery_threshold = 10
+local msg = require 'mp.msg'
+local utils = require 'mp.utils'
+local options = require 'mp.options'
+
+o = {
+    max_search_depth = 3,
+    discovery_threshold = 10,
+    excluded_dir = [[
+        []
+    ]],
+}
+options.read_options(o)
 
 ----------
 
-local utils = require "mp.utils"
-local msg = require "mp.msg"
+excluded_dir = utils.parse_json(o.excluded_dir)
 
 local default_audio_paths = mp.get_property_native("options/audio-file-paths")
 local default_sub_paths = mp.get_property_native("options/sub-file-paths")
@@ -54,6 +70,15 @@ function foreach(list, action)
     for _, item in pairs(list) do
         action(item)
     end
+end
+
+function need_ignore(tab, val)
+    for index, element in ipairs(tab) do
+        if string.find(val, element) then
+            return true
+        end
+    end
+    return false
 end
 
 function starts_with(str, prefix)
@@ -168,7 +193,7 @@ end
 function traverse(search_path, current_path, level, cache)
     local full_path = utils.join_path(search_path, current_path)
 
-    if level > max_search_depth then
+    if level > o.max_search_depth then
         msg.trace("Traversed too deep, skipping scan for", full_path)
         return {}
     end
@@ -184,7 +209,7 @@ function traverse(search_path, current_path, level, cache)
     if discovered_paths == nil then
         -- noop
         msg.debug("Unable to scan " .. full_path .. ", skipping")
-    elseif discovery_threshold > 0 and #discovered_paths > discovery_threshold then
+    elseif o.discovery_threshold > 0 and #discovered_paths > o.discovery_threshold then
         -- noop
         msg.debug("Too many directories in " .. full_path .. ", skipping")
     else
@@ -227,13 +252,16 @@ function explode(raw_paths, search_path, cache)
 end
 
 function explode_all()
-    msg.debug("max_search_depth = ".. max_search_depth .. ", discovery_threshold = " .. discovery_threshold)
+    msg.debug("max_search_depth = ".. o.max_search_depth .. ", discovery_threshold = " .. o.discovery_threshold)
 
     local video_path = mp.get_property("path")
     local search_path, _ = utils.split_path(video_path)
     msg.debug("search_path = " .. search_path)
 
     local cache = {}
+    if need_ignore(excluded_dir, search_path) then
+        return
+    end
 
     foreach(default_audio_paths, function(it) msg.debug("audio-file-paths:", it) end)
     local audio_paths = explode(default_audio_paths, search_path, cache)
