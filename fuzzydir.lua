@@ -156,7 +156,7 @@ msg.debug("PowerShell version", powershell_version)
 function fast_readdir(path)
     if powershell_version >= 3 then
         msg.trace("Scanning", path, "with PowerShell")
-        return call_command({
+        result = call_command({
             "powershell",
             "-NoProfile",
             "-Command",
@@ -168,10 +168,14 @@ function fast_readdir(path)
                 Write-Host ""
             } ]],
         })
+        msg.trace("Finished scanning", path, "with PowerShell")
+        return result
     end
 
     msg.trace("Scanning", path, "with default readdir")
-    return utils.readdir(path, "dirs")
+    result = utils.readdir(path, "dirs")
+    msg.trace("Finished scanning", path, "with default readdir")
+    return result
 end
 
 -- Platform-dependent optimization end
