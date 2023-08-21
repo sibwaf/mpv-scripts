@@ -16,7 +16,7 @@
     Configuration:
 
     # max_search_depth
-    
+
     Determines the max depth of recursive search, should be >= 1
 
     Examples for "sub-file-paths = **":
@@ -25,7 +25,7 @@
 
     Please be careful when setting this value too high as it can result in awful performance or even stack overflow
 
-    
+
     # discovery_threshold
 
     fuzzydir will skip paths which contain more than discovery_threshold directories in them
@@ -37,10 +37,18 @@
     - video.mp4
 
     Use 0 to disable this behavior completely
+
+
+    # use_powershell
+
+    fuzzydir will use PowerShell to traverse directories when it's available
+
+    Can be faster in some cases, but can also be significantly slower
 ]]
 
 local max_search_depth = 3
 local discovery_threshold = 10
+local use_powershell = false
 
 ----------
 
@@ -128,12 +136,15 @@ end
 
 -- Platform-dependent optimization
 
-local powershell_version = call_command({
-    "powershell",
-    "-NoProfile",
-    "-Command",
-    "$Host.Version.Major",
-})
+local powershell_version = nil
+if use_powershell then
+    powershell_version = call_command({
+        "powershell",
+        "-NoProfile",
+        "-Command",
+        "$Host.Version.Major",
+    })
+end
 if powershell_version ~= nil then
     powershell_version = tonumber(powershell_version[1])
 end
@@ -240,10 +251,16 @@ function explode_all()
     foreach(audio_paths, function(it) msg.debug("Adding to audio-file-paths:", it) end)
     mp.set_property_native("options/audio-file-paths", audio_paths)
 
+    msg.verbose("Done expanding audio-file-paths")
+
     foreach(default_sub_paths, function(it) msg.debug("sub-file-paths:", it) end)
     local sub_paths = explode(default_sub_paths, search_path, cache)
     foreach(sub_paths, function(it) msg.debug("Adding to sub-file-paths:", it) end)
     mp.set_property_native("options/sub-file-paths", sub_paths)
+
+    msg.verbose("Done expanding sub-file-paths")
+
+    msg.debug("Done expanding paths")
 end
 
 mp.add_hook("on_load", 50, explode_all)
