@@ -15,12 +15,28 @@
 	Configuration:
 
 	# property
-	
+
 	Theoratically, can be any of: "brightness", "contrast", "saturation", "gamma", "hue".
 	In practice, "contrast" seems to work best. Setting it to "saturation" or "hue"
 	is pretty much pointless as you will get gray-scale or a colored negative video.
 ]]
+
 local property = "contrast"
+
+----------
+
+local watch_later_options_default = mp.get_property_native("watch-later-options")
+local watch_later_options_blackout = {}
+
+for _, option in pairs(watch_later_options_default) do
+	if option == property then
+		-- remove
+	elseif option == "sid" then
+		-- remove
+	else
+		table.insert(watch_later_options_blackout, option)
+	end
+end
 
 local saved_value = nil
 local saved_sid = nil
@@ -32,6 +48,8 @@ function toggle_blackout()
 
 		mp.set_property("sid", saved_sid)
 		saved_sid = nil
+
+		mp.set_property_native("watch-later-options", watch_later_options_default)
 	else
 		mp.set_property("pause", "yes")
 
@@ -40,6 +58,8 @@ function toggle_blackout()
 
 		saved_sid = mp.get_property("sid")
 		mp.set_property("sid", "no")
+
+		mp.set_property_native("watch-later-options", watch_later_options_blackout)
 	end
 end
 
