@@ -15,6 +15,10 @@
 --[[
     Configuration:
 
+    # enabled
+
+    Determines whether the script is enabled or not
+
     # max_search_depth
 
     Determines the max depth of recursive search, should be >= 1
@@ -46,14 +50,19 @@
     Can be faster in some cases, but can also be significantly slower
 ]]
 
-local max_search_depth = 3
-local discovery_threshold = 10
-local use_powershell = false
+local msg = require 'mp.msg'
+local utils = require 'mp.utils'
+local options = require 'mp.options'
+
+o = {
+    enabled = true,
+    max_search_depth = 3,
+    discovery_threshold = 10,
+    use_powershell = false,
+}
+options.read_options(o, _, function() end)
 
 ----------
-
-local utils = require "mp.utils"
-local msg = require "mp.msg"
 
 local default_audio_paths = mp.get_property_native("options/audio-file-paths")
 local default_sub_paths = mp.get_property_native("options/sub-file-paths")
@@ -137,7 +146,7 @@ end
 -- Platform-dependent optimization
 
 local powershell_version = nil
-if use_powershell then
+if o.use_powershell then
     powershell_version = call_command({
         "powershell",
         "-NoProfile",
@@ -183,7 +192,7 @@ end
 function traverse(search_path, current_path, level, cache)
     local full_path = utils.join_path(search_path, current_path)
 
-    if level > max_search_depth then
+    if level > o.max_search_depth then
         msg.trace("Traversed too deep, skipping scan for", full_path)
         return {}
     end
@@ -199,7 +208,7 @@ function traverse(search_path, current_path, level, cache)
     if discovered_paths == nil then
         -- noop
         msg.debug("Unable to scan " .. full_path .. ", skipping")
-    elseif discovery_threshold > 0 and #discovered_paths > discovery_threshold then
+    elseif o.discovery_threshold > 0 and #discovered_paths > o.discovery_threshold then
         -- noop
         msg.debug("Too many directories in " .. full_path .. ", skipping")
     else
@@ -242,7 +251,8 @@ function explode(raw_paths, search_path, cache)
 end
 
 function explode_all()
-    msg.debug("max_search_depth = ".. max_search_depth .. ", discovery_threshold = " .. discovery_threshold)
+    if not o.enabled then return end
+    msg.debug("max_search_depth = ".. o.max_search_depth .. ", discovery_threshold = " .. o.discovery_threshold)
 
     local video_path = mp.get_property("path")
     local search_path, _ = utils.split_path(video_path)
