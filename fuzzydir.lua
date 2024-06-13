@@ -278,3 +278,27 @@ function explode_all()
 end
 
 mp.add_hook("on_load", 50, explode_all)
+
+function rescan_paths()
+    local audio_file_paths_changed = false
+    local sub_file_paths_changed = false
+    local function on_audio_file_paths_changed()
+        audio_file_paths_changed = true
+        mp.unobserve_property(on_audio_file_paths_changed)
+        if audio_file_paths_changed and sub_file_paths_changed then
+            mp.commandv("sync", "rescan-external-files")
+        end
+    end
+    local function on_sub_file_paths_changed()
+        sub_file_paths_changed = true
+        mp.unobserve_property(on_sub_file_paths_changed)
+        if audio_file_paths_changed and sub_file_paths_changed then
+            mp.commandv("sync", "rescan-external-files")
+        end
+    end
+    mp.observe_property("options/audio-file-paths", nil, on_audio_file_paths_changed)
+    mp.observe_property("options/sub-file-paths", nil, on_sub_file_paths_changed)
+    explode_all()
+end
+
+mp.register_script_message("rescan-paths", rescan_paths)
